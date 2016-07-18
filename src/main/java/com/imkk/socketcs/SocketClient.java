@@ -1,4 +1,4 @@
-package com.imkk.multicast.socketcs;
+package com.imkk.socketcs;
 
 import java.io.*;
 import java.net.Socket;
