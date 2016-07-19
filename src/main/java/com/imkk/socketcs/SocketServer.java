@@ -27,7 +27,7 @@ public class SocketServer {
     public SocketServer(){
 
         try {
-            mServerSocket = new ServerSocket(40005);
+            mServerSocket = new ServerSocket(65534);
 
         } catch (IOException e) {
             e.printStackTrace();

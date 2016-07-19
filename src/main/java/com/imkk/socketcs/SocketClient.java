@@ -16,7 +16,7 @@ import java.net.Socket;
 public class SocketClient {
 
     private static final String SERVER_IP = "127.0.0.1";
-    private static final int PORT = 40005;
+    private static final int PORT = 65534;
     private static final int TIME_OUT = 10 * 1000;//10S
 
     private Socket mClientSocket;
