@@ -11,10 +11,18 @@ public class SocketCSTest {
 
         System.out.println("main start");
 
+
         SocketServer socketServer = new SocketServer();
         socketServer.accept();
 
+        
+       while (true){
+           try {
+               Thread.sleep(100000);
+           } catch (InterruptedException e) {
+               e.printStackTrace();
+           }
+       }
 
-        System.out.println("main quit");
     }
 }

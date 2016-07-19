@@ -1,6 +1,9 @@
 package com.imkk.socketcs;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
 
 /**
@@ -15,12 +18,12 @@ import java.net.Socket;
  */
 public class SocketClient {
 
-    private static final String SERVER_IP = "127.0.0.1";
+    private static final String SERVER_IP = "10.240.252.97";
     private static final int PORT = 65534;
     private static final int TIME_OUT = 10 * 1000;//10S
 
     private Socket mClientSocket;
-    BufferedWriter mOutputStream;
+    PrintWriter mOutputStream;
     BufferedReader mInputStream;
 
     public SocketClient(){
@@ -28,10 +31,10 @@ public class SocketClient {
         try {
             //1.创建套接字
             mClientSocket = new Socket(SERVER_IP, PORT);
-            mClientSocket.setSoTimeout(TIME_OUT);
+           //1 mClientSocket.setSoTimeout(TIME_OUT);
 
             //2.通过套接字的I/O流与服务端通信
-            mOutputStream = new BufferedWriter(new OutputStreamWriter(mClientSocket.getOutputStream()));
+            mOutputStream = new PrintWriter(mClientSocket.getOutputStream(), true);
             mInputStream = new BufferedReader(new InputStreamReader(mClientSocket.getInputStream()));
 
         } catch (IOException e) {
@@ -41,23 +44,25 @@ public class SocketClient {
 
     //建立聊天通信
     public void communicate(){
+
+
         new Thread(new Runnable() {
             public void run() {
                 sendMessage();
             }
-        });
+        }).start();
 
         new Thread(new Runnable() {
             public void run() {
                 receiveMessage();
             }
-        });
+        }).start();
     }
 
 
     private void sendMessage(){
 
-        boolean flag = false;
+        boolean flag = true;
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
         System.out.println("请输入信息");
@@ -65,9 +70,8 @@ public class SocketClient {
 
             try {
                 String str = reader.readLine();
-                mOutputStream.write(str);
+                mOutputStream.println(str);
 
-                System.out.println("client: " + str);
                 if (str.equals("bye")){
                     flag = false;
                 }
@@ -76,6 +80,7 @@ public class SocketClient {
                 e.printStackTrace();
             }
         }
+
 
         //关闭键盘输入
         try {
@@ -87,20 +92,29 @@ public class SocketClient {
         //关闭套接字
         if (mClientSocket != null){
             try {
+                mInputStream.close();
+                mOutputStream.close();
                 mClientSocket.close();
+
+                mInputStream = null;
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+
+        System.out.println("聊天关闭");
     }
 
     private void receiveMessage(){
 
         try {
-            String receiveMsg = mInputStream.readLine();
-            System.out.println("server: " + receiveMsg);
+            while (true) {
+                String receiveMsg = mInputStream.readLine();
+                System.out.println("server: " + receiveMsg);
+            }
         } catch (IOException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         }
+
     }
 }
