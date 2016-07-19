@@ -10,19 +10,17 @@ public class SocketCSTest {
     public static void main(String[] args){
 
         System.out.println("main start");
-        SocketServer socketServer = new SocketServer();
-        socketServer.accept();
 
-      //  SocketClient socketClient = new SocketClient();
-      //  socketClient.communicate();
+        SocketClient socketClient = new SocketClient();
+        socketClient.communicate();
 
 
-        try {
-            System.in.read();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        System.out.println("main quit");
+       while (true){
+           try {
+               Thread.sleep(100000);
+           } catch (InterruptedException e) {
+               e.printStackTrace();
+           }
+       }
     }
 }
