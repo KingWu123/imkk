@@ -36,24 +36,16 @@ public class SocketServer {
 
     public void accept(){
 
-        new Thread(new Runnable() {
-            public void run() {
+        while (true) {
+            try {
+                Socket clientSocket = mServerSocket.accept();
 
-                while (true) {
-                    try {
-                        Socket clientSocket = mServerSocket.accept();
+                mExec.execute(new SocketRunnable(clientSocket));
 
-                        mExec.execute(new SocketRunnable(clientSocket));
-
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                // TODO: 7/18/16  怎么退出
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        });
-
+        }
     }
 
     //socket server怎么退出
@@ -83,25 +75,31 @@ public class SocketServer {
 
             //获取Socket的输入流，用来接收从客户端发送过来的数据
             try {
-                BufferedReader readerBuf = new BufferedReader(new InputStreamReader(mClient.getInputStream()));
-                BufferedWriter writerBuf = new BufferedWriter(new OutputStreamWriter(mClient.getOutputStream()));
+                PrintWriter out = new PrintWriter(mClient.getOutputStream(), true);
+                BufferedReader in = new BufferedReader(new InputStreamReader(mClient.getInputStream()));
 
                 boolean flag = true;
 
-                System.out.println("one client come");
+                System.out.println("client ip: " + mClient.getInetAddress() + " come");
 
                 while (flag){
-                    String str = readerBuf.readLine();
+                    String str = in.readLine();
+
                     if (str.equals("bye")){
                         flag = false;
-                        System.out.println("good bye");
-                    }else {
-                        System.out.println("client " + mClient.getInetAddress() + " : " + str);
                     }
+                    System.out.println("    client msg : " + str);
 
-                    writerBuf.write("echo " + str);
+                    String answer = "echo " + str;
+                    out.println(answer);
+                    System.out.println("    server msg : " + answer);
                 }
 
+
+                System.out.println("client ip: " + mClient.getInetAddress() + " exit");
+                out.close();
+                in.close();
+                mClient.close();
 
             } catch (IOException e) {
                 e.printStackTrace();
