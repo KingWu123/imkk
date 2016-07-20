@@ -15,7 +15,6 @@ public class SocketCSTest {
         SocketClient socketClient = new SocketClient();
         socketClient.communicate();
 
-
         //服务端
         //SocketServer socketServer = new SocketServer();
        // socketServer.accept();
@@ -27,5 +26,6 @@ public class SocketCSTest {
                e.printStackTrace();
            }
        }
+
     }
 }
