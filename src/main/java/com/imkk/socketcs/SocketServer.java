@@ -80,23 +80,28 @@ public class SocketServer {
 
                 boolean flag = true;
 
-                System.out.println("client ip: " + mClient.getInetAddress() + " come");
+                System.out.println("client ip:" + mClient.getInetAddress()  + "  port:" + mClient.getPort() + " come");
 
                 while (flag){
                     String str = in.readLine();
 
+                    //说明客户端强制关闭了
+                    if (str == null){
+                        break;
+                    }
+
                     if (str.equals("bye")){
                         flag = false;
                     }
-                    System.out.println("    client msg : " + str);
 
+                    System.out.println("    client msg : " + str);
                     String answer = "echo " + str;
                     out.println(answer);
                     System.out.println("    server msg : " + answer);
                 }
 
 
-                System.out.println("client ip: " + mClient.getInetAddress() + " exit");
+                System.out.println("client ip:" + mClient.getInetAddress() + "  port:" + mClient.getPort() + " exit");
                 out.close();
                 in.close();
                 mClient.close();
