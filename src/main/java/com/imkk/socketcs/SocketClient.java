@@ -12,9 +12,11 @@ import java.net.Socket;
  * 实现 socket通信的客户端
  *
  *
- *  1. 创建一个Socket实例：构造函数向指定的远程主机和端口建立一个TCP连接；
- *  2. 通过套接字的I/O流与服务端通信；
- *  3. 使用Socket类的close方法关闭连接。
+ * 1. Open a socket.
+ * 2. Open an input stream and output stream to the socket.
+ * 3. Read from and write to the stream according to the server's protocol.
+ * 4. Close the streams.
+ * 5. Close the socket.
  */
 public class SocketClient {
 
@@ -31,7 +33,7 @@ public class SocketClient {
         try {
             //1.创建套接字
             mClientSocket = new Socket(SERVER_IP, PORT);
-           //1 mClientSocket.setSoTimeout(TIME_OUT);
+            //mClientSocket.setSoTimeout(TIME_OUT);
 
             //2.通过套接字的I/O流与服务端通信
             mOutputStream = new PrintWriter(mClientSocket.getOutputStream(), true);
@@ -44,7 +46,6 @@ public class SocketClient {
 
     //建立聊天通信
     public void communicate(){
-
 
         new Thread(new Runnable() {
             public void run() {
@@ -65,13 +66,14 @@ public class SocketClient {
         boolean flag = true;
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
-        System.out.println("请输入信息");
+        System.out.println("聊天开始: 请输入信息");
         while (flag){
 
             try {
                 String str = reader.readLine();
                 mOutputStream.println(str);
 
+                //输入结束符
                 if (str.equals("bye")){
                     flag = false;
                 }
@@ -89,32 +91,48 @@ public class SocketClient {
             e.printStackTrace();
         }
 
-        //关闭套接字
-        if (mClientSocket != null){
-            try {
-                mInputStream.close();
-                mOutputStream.close();
-                mClientSocket.close();
-
-                mInputStream = null;
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        //关闭输出通道
+        try {
+            mClientSocket.shutdownOutput();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
-        System.out.println("聊天关闭");
     }
+
+
 
     private void receiveMessage(){
 
-        try {
-            while (true) {
+        boolean flag = true;
+        while (flag){
+            try {
                 String receiveMsg = mInputStream.readLine();
+
+                if (receiveMsg == null ){
+                    break;
+                }
+
+                //收到结束符
+                if (receiveMsg.equals("echo bye")){
+                    flag  = false;
+                }
+
                 System.out.println("server: " + receiveMsg);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            //e.printStackTrace();
+
         }
 
+        // Closing either the input or the output stream of a Socket closes the other stream and the Socket.
+        try {
+            mOutputStream.close();//关闭输出流
+            mInputStream.close(); //关闭输入流
+            mClientSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("聊天关闭");
     }
 }

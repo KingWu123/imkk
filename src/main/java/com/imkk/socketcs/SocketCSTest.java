@@ -11,9 +11,14 @@ public class SocketCSTest {
 
         System.out.println("main start");
 
+        //客户端
         SocketClient socketClient = new SocketClient();
         socketClient.communicate();
 
+
+        //服务端
+        //SocketServer socketServer = new SocketServer();
+       // socketServer.accept();
 
        while (true){
            try {
