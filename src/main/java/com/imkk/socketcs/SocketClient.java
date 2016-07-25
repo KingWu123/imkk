@@ -23,8 +23,8 @@ public class SocketClient {
 
     private Socket mClientSocket;
 
-    PrintWriter mOutputStream;  //发送消息的 outputStream
-    BufferedReader mInputStream; //接受数据的inputStream
+    OutputStream mOutputStream;  //发送消息的 outputStream
+    InputStream mInputStream; //接受数据的inputStream
 
     public SocketClient(){
 
@@ -34,8 +34,8 @@ public class SocketClient {
             //mClientSocket.setSoTimeout(TIME_OUT);
 
             //2.通过套接字的I/O流与服务端通信
-            mOutputStream = new PrintWriter(mClientSocket.getOutputStream(), true);
-            mInputStream = new BufferedReader(new InputStreamReader(mClientSocket.getInputStream()));
+            mOutputStream = mClientSocket.getOutputStream();
+            mInputStream = mClientSocket.getInputStream();
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -61,24 +61,34 @@ public class SocketClient {
 
     private void sendMessage(){
 
-        boolean flag = true;
+        System.out.println("聊天开始: 请输入信息");
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
-        System.out.println("聊天开始: 请输入信息");
-        while (flag){
+        try {
+            boolean flag = true;
 
-            try {
+            while (flag){
+
                 String str = reader.readLine();
-                mOutputStream.println(str);
 
-                //输入结束符
-                if (str.equals("bye")){
+                if (str == null){
+                    break;
+                }
+                else if (str.equals("bye")){
+                    //输入结束符
                     flag = false;
+
                 }
 
-            } catch (IOException e) {
-                e.printStackTrace();
+                if (str.equals("file")){
+                    sendFileMessage();
+
+                }else {
+                    sendNormalMessage(str);
+                }
             }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
 
@@ -101,34 +111,35 @@ public class SocketClient {
 
     private void receiveMessage(){
 
-        boolean flag = true;
-        while (flag){
-            try {
-                String receiveMsg = mInputStream.readLine();
+        try {
 
-                if (receiveMsg == null ){
-                    break;
+            boolean flag = true;
+            MessageStream messageStream = new MessageStream();
+
+            while (flag){
+
+                messageStream.receive(mInputStream);
+
+                Message message = messageStream.getMessage();
+                if (message == null){
+                    continue;
+                }
+                //处理到来的消息
+                processCommMessage(message);
+
+                //如果是普通消息, 且回话内容为"echo bye", 会话结束
+                if(message.getType() == 0){
+
+                    String msg = new String(message.getBody());
+                    if (msg.equals("echo bye")){
+                        flag  = false;
+                    }
                 }
 
-                //收到结束符
-                if (receiveMsg.equals("echo bye")){
-                    flag  = false;
-                }
-                //服务器传来接受文件,客户端传送一个文件过去
-                else if (receiveMsg.equals("echo file")){
-
-                    new Thread(new Runnable() {
-                        public void run() {
-                            sendFile();
-                        }
-                    }).start();
-                }
-
-                System.out.println("server: " + receiveMsg);
-            } catch (IOException e) {
-                e.printStackTrace();
             }
 
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
         // Closing either the input or the output stream of a Socket closes the other stream and the Socket.
@@ -145,26 +156,41 @@ public class SocketClient {
 
 
 
+    private void sendNormalMessage(String msg) throws IOException {
+
+        //将读入的数据转换成约定的消息结构体
+        Message message = new Message((short) 0, msg.getBytes());
+        message.send(mOutputStream);
+    }
+
+
+
     //发送文件
-    private void sendFile(){
+    private void sendFileMessage(){
 
         String filePath = this.getClass().getClassLoader().getResource("1111.zip").getPath();
         File file = new File(filePath);
 
-        long length = file.length();
+        int length = (int) file.length();
         if (length < 0){
             return;
         }
+
+
 
         byte[] bytes = new byte[1024 * 8];
         int count;
         try {
 
-            OutputStream out = mClientSocket.getOutputStream();
             InputStream in = new FileInputStream(file);
 
+            boolean firstPackage = true;
             while ( (count = in.read(bytes)) > 0){
-                out.write(bytes, 0, count);
+
+                //剩余的数据,直接发送过去
+                DataOutputStream dataOutputStream = new DataOutputStream(mOutputStream);
+                dataOutputStream.write(bytes, 0, count);
+
             }
 
             in.close();
@@ -176,5 +202,25 @@ public class SocketClient {
         }
     }
 
+
+
+    /**
+     * 处理消息
+     * @param message Message
+     */
+    private void processCommMessage(Message message){
+
+        //普通消息
+        if(message.getType() == 0){
+
+            String msg = new String(message.getBody());
+            System.out.println("server: " + msg);
+        }
+        //文件消息
+        else if(message.getType() == 1){
+            System.out.println("server: one file coming, receiving...." );
+        }
+
+    }
 
 }

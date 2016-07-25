@@ -73,50 +73,96 @@ public class SocketServer {
 
         public void run() {
 
-            //获取Socket的输入流，用来接收从客户端发送过来的数据
+            OutputStream out = null;
+            InputStream in = null;
+
             try {
-                PrintWriter out = new PrintWriter(mClient.getOutputStream(), true);
-                BufferedReader in = new BufferedReader(new InputStreamReader(mClient.getInputStream()));
+
+                out = mClient.getOutputStream();
+                in = mClient.getInputStream();
 
                 boolean flag = true;
 
                 System.out.println("client ip:" + mClient.getInetAddress()  + "  port:" + mClient.getPort() + " come");
 
+                MessageStream messageStream = new MessageStream();
                 while (flag){
-                    String str = in.readLine();
 
-                    //说明客户端强制关闭了
-                    if (str == null){
-                        break;
+                    messageStream.receive(in);
+
+                    Message message = messageStream.getMessage();
+                    if (message == null){
+                        continue;
                     }
+                    processMessage(message, out);
 
-                    //客户端告知断开连接
-                    if (str.equals("bye")){
-                        flag = false;
+
+                    //客户端发送的为普通消息,且表示结束会话
+                    if(message.getType() == 0){
+                        String msg = new String(message.getBody());
+                        //客户端告知断开连接
+                        if (msg.equals("bye")){
+                            flag = false;
+                        }
                     }
-
-                    System.out.println("    client msg : " + str);
-                    String answer = "echo " + str;
-                    out.println(answer);
-                    System.out.println("    server msg : " + answer);
                 }
 
-
-                System.out.println("client ip:" + mClient.getInetAddress() + "  port:" + mClient.getPort() + " exit");
-                out.close();
-                in.close();
-                mClient.close();
+            }catch (EOFException e){
 
             } catch (IOException e) {
                 e.printStackTrace();
+            }finally {
+
+                if (out != null){
+                    try {
+                        out.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (in != null){
+                    try {
+                        in.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (mClient != null) {
+                    try {
+                        mClient.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
+
+            System.out.println("client ip:" + mClient.getInetAddress() + "  port:" + mClient.getPort() + " exit");
         }
 
 
 
+        private void processMessage(Message message, OutputStream out) throws IOException{
+
+            //客户端发送的为普通消息
+            if(message.getType() == 0){
+
+                String msg = new String(message.getBody());
+
+                System.out.println("    client msg : " + msg);
+                String answer = "echo " + msg;
+                System.out.println("    server msg : " + answer);
+
+                Message answerMessage = new Message((short) 0, answer.getBytes());
+                answerMessage.send(out);
+            }
+            //文件消息
+            else if (message.getType() == 1){
+
+                System.out.println("    client msg : one file coming, receiving....");
+            }
 
 
-
+        }
 
 
 
