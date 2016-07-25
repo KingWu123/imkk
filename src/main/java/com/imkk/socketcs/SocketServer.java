@@ -90,6 +90,7 @@ public class SocketServer {
                         break;
                     }
 
+                    //客户端告知断开连接
                     if (str.equals("bye")){
                         flag = false;
                     }
@@ -109,6 +110,39 @@ public class SocketServer {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+
+
+
+
+
+
+
+
+
+        private void receiveFile(){
+
+            try {
+
+
+                InputStream in = mClient.getInputStream();
+                OutputStream out =  new FileOutputStream("test.zip");
+
+                byte[] bytes = new byte[1024 * 8];
+                int count;
+                while ((count = in.read(bytes))> 0){
+
+                    out.write(bytes,0, count);
+                }
+
+                out.close();
+
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            ;
         }
     }
 }

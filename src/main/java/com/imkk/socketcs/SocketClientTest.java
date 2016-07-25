@@ -5,19 +5,14 @@ import java.io.IOException;
 /**
  * Created by kingwu on 7/18/16.
  */
-public class SocketCSTest {
+public class SocketClientTest {
 
     public static void main(String[] args){
-
-        System.out.println("main start");
 
         //客户端
         SocketClient socketClient = new SocketClient();
         socketClient.communicate();
 
-        //服务端
-        //SocketServer socketServer = new SocketServer();
-       // socketServer.accept();
 
        while (true){
            try {

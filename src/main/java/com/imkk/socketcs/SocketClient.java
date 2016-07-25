@@ -1,9 +1,6 @@
 package com.imkk.socketcs;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
 
 /**
@@ -20,13 +17,14 @@ import java.net.Socket;
  */
 public class SocketClient {
 
-    private static final String SERVER_IP = "10.240.252.97";
+    private static final String SERVER_IP = "localhost";//"10.240.252.97";
     private static final int PORT = 65534;
     private static final int TIME_OUT = 10 * 1000;//10S
 
     private Socket mClientSocket;
-    PrintWriter mOutputStream;
-    BufferedReader mInputStream;
+
+    PrintWriter mOutputStream;  //发送消息的 outputStream
+    BufferedReader mInputStream; //接受数据的inputStream
 
     public SocketClient(){
 
@@ -116,6 +114,15 @@ public class SocketClient {
                 if (receiveMsg.equals("echo bye")){
                     flag  = false;
                 }
+                //服务器传来接受文件,客户端传送一个文件过去
+                else if (receiveMsg.equals("echo file")){
+
+                    new Thread(new Runnable() {
+                        public void run() {
+                            sendFile();
+                        }
+                    }).start();
+                }
 
                 System.out.println("server: " + receiveMsg);
             } catch (IOException e) {
@@ -135,4 +142,39 @@ public class SocketClient {
 
         System.out.println("聊天关闭");
     }
+
+
+
+    //发送文件
+    private void sendFile(){
+
+        String filePath = this.getClass().getClassLoader().getResource("1111.zip").getPath();
+        File file = new File(filePath);
+
+        long length = file.length();
+        if (length < 0){
+            return;
+        }
+
+        byte[] bytes = new byte[1024 * 8];
+        int count;
+        try {
+
+            OutputStream out = mClientSocket.getOutputStream();
+            InputStream in = new FileInputStream(file);
+
+            while ( (count = in.read(bytes)) > 0){
+                out.write(bytes, 0, count);
+            }
+
+            in.close();
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
 }
