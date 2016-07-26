@@ -1,9 +1,6 @@
 package com.imkk.socketcs;
 
-import java.io.BufferedOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 
 /**
  * Created by kingwu on 7/25/16.
@@ -13,6 +10,8 @@ import java.io.OutputStream;
  * 一条消息由:   包头标记位 + 消息类型 + 包体长度 + 包体  组成。
  *
  * 提供了一个发送消息的 接口 {@link #send(OutputStream)}
+ *
+ * attention,这条消息的 body内容是直接存在内存里的,所以,适合发送较小的消息。大型的文件并不适合
  *
  */
 

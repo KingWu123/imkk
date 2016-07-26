@@ -1,0 +1,83 @@
+package com.imkk.socketcs;
+
+import java.io.*;
+
+/**
+ * Created by kingwu on 7/26/16.
+ *
+ * 用于处理 文件消息
+ */
+public class FileMessageUtil {
+
+    //发送文件
+    public static void sendFile(String filePath, OutputStream outputStream){
+
+        File file = new File(filePath);
+
+        int length = (int) file.length();
+        if (length < 0){
+            return;
+        }
+
+        System.out.println("begin sending file....");
+        int count;
+        try {
+
+            DataOutputStream dataOutputStream = new DataOutputStream(new BufferedOutputStream(outputStream));
+
+            //发送包头
+            dataOutputStream.writeInt(Message.PACKAGE_FLAG);
+            dataOutputStream.writeShort(1);
+            dataOutputStream.writeInt(length);
+
+            InputStream in = new FileInputStream(file);
+            byte[] bytes = new byte[1024 * 4];
+            while ( (count = in.read(bytes)) > 0){
+                dataOutputStream.write(bytes, 0, count);
+                dataOutputStream.flush();
+            }
+
+            in.close();
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("end sending file....");
+
+    }
+
+
+    public static void receiveFile(String savePath, InputStream inputStream){
+
+        System.out.println("begin receiveFile file....");
+        try {
+
+            OutputStream out =  new FileOutputStream("savePath");
+
+            DataInputStream in = new DataInputStream(inputStream);
+            int packageFlag = in.readInt();
+            int packageType = in.readShort();
+            int fileLength = in.readInt();
+            //可以对上面的3信息做校验
+
+            byte[] bytes = new byte[1024 * 8];
+            int count;
+            while ((count = in.read(bytes))> 0){
+
+                out.write(bytes,0, count);
+            }
+
+            out.close();
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("end receiveFile file....");
+    }
+}

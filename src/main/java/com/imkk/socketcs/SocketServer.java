@@ -3,6 +3,7 @@ package com.imkk.socketcs;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -88,17 +89,23 @@ public class SocketServer {
                 MessageStream messageStream = new MessageStream();
                 while (flag){
 
-                    messageStream.receive(in);
+                    int count = messageStream.receive(in);
 
-                    Message message = messageStream.getMessage();
-                    if (message == null){
+
+                    Message message= messageStream.getMessage();
+
+                    //如果count -1 且没有解析出消息, 则直接退出
+                    if (count == -1 &&  message == null){
+                        break;
+                    }else if (message == null){
                         continue;
                     }
+
+
                     processMessage(message, out);
 
-
                     //客户端发送的为普通消息,且表示结束会话
-                    if(message.getType() == 0){
+                    if( count == -1 || message.getType() == 0){
                         String msg = new String(message.getBody());
                         //客户端告知断开连接
                         if (msg.equals("bye")){
@@ -111,7 +118,9 @@ public class SocketServer {
 
             } catch (IOException e) {
                 e.printStackTrace();
-            }finally {
+            }catch (Exception e){
+
+            } finally {
 
                 if (out != null){
                     try {
@@ -146,6 +155,9 @@ public class SocketServer {
             //客户端发送的为普通消息
             if(message.getType() == 0){
 
+                if (message.getBody() == null){
+                    return;
+                }
                 String msg = new String(message.getBody());
 
                 System.out.println("    client msg : " + msg);
@@ -158,37 +170,10 @@ public class SocketServer {
             //文件消息
             else if (message.getType() == 1){
 
-                System.out.println("    client msg : one file coming, receiving....");
+                System.out.println("    client msg : one file coming, received");
             }
 
 
-        }
-
-
-
-        private void receiveFile(){
-
-            try {
-
-
-                InputStream in = mClient.getInputStream();
-                OutputStream out =  new FileOutputStream("test.zip");
-
-                byte[] bytes = new byte[1024 * 8];
-                int count;
-                while ((count = in.read(bytes))> 0){
-
-                    out.write(bytes,0, count);
-                }
-
-                out.close();
-
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            ;
         }
     }
 }

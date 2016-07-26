@@ -1,6 +1,7 @@
 package com.imkk.socketcs;
 
 import java.io.*;
+import java.lang.annotation.ElementType;
 import java.net.Socket;
 
 /**
@@ -45,17 +46,21 @@ public class SocketClient {
     //建立聊天通信
     public void communicate(){
 
-        new Thread(new Runnable() {
-            public void run() {
-                sendMessage();
-            }
-        }).start();
+        if (mClientSocket != null && mClientSocket.isConnected()) {
+            new Thread(new Runnable() {
+                public void run() {
+                    sendMessage();
+                }
+            }).start();
 
-        new Thread(new Runnable() {
-            public void run() {
-                receiveMessage();
-            }
-        }).start();
+            new Thread(new Runnable() {
+                public void run() {
+                    receiveMessage();
+                }
+            }).start();
+        }else {
+            System.out.println("socket not connect success");
+        }
     }
 
 
@@ -77,14 +82,14 @@ public class SocketClient {
                 else if (str.equals("bye")){
                     //输入结束符
                     flag = false;
-
+                }else if (str.equals("")){
+                    continue;
                 }
 
-                if (str.equals("file")){
-                    sendFileMessage();
-
-                }else {
+                if (!str.equals("file")){
                     sendNormalMessage(str);
+                }else {
+                    sendFileMessage();
                 }
             }
         } catch (IOException e) {
@@ -118,17 +123,23 @@ public class SocketClient {
 
             while (flag){
 
-                messageStream.receive(mInputStream);
+                int count = messageStream.receive(mInputStream);
 
                 Message message = messageStream.getMessage();
-                if (message == null){
+
+                //如果count -1 且没有解析出消息, 则直接退出
+                if (count == -1 && message == null){
+                    break;
+                } else  if (message == null){
                     continue;
                 }
+
+
                 //处理到来的消息
                 processCommMessage(message);
 
                 //如果是普通消息, 且回话内容为"echo bye", 会话结束
-                if(message.getType() == 0){
+                if(count == -1 || message.getType() == 0){
 
                     String msg = new String(message.getBody());
                     if (msg.equals("echo bye")){
@@ -164,43 +175,12 @@ public class SocketClient {
     }
 
 
-
-    //发送文件
     private void sendFileMessage(){
-
         String filePath = this.getClass().getClassLoader().getResource("1111.zip").getPath();
-        File file = new File(filePath);
-
-        int length = (int) file.length();
-        if (length < 0){
-            return;
-        }
-
-
-
-        byte[] bytes = new byte[1024 * 8];
-        int count;
-        try {
-
-            InputStream in = new FileInputStream(file);
-
-            boolean firstPackage = true;
-            while ( (count = in.read(bytes)) > 0){
-
-                //剩余的数据,直接发送过去
-                DataOutputStream dataOutputStream = new DataOutputStream(mOutputStream);
-                dataOutputStream.write(bytes, 0, count);
-
-            }
-
-            in.close();
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        FileMessageUtil.sendFile(filePath, mOutputStream);
     }
+
+
 
 
 
