@@ -7,7 +7,7 @@ import java.io.*;
  *
  * 用于处理 文件消息
  */
-public class FileMessageUtil {
+public class FileUtil {
 
     //发送文件
     public static void sendFile(String filePath, OutputStream outputStream){
@@ -48,6 +48,30 @@ public class FileMessageUtil {
         System.out.println("end sending file....");
 
     }
+
+
+    public static void saveFile(String filePath, Message message){
+        System.out.println("save receiveFile file....");
+        try {
+            if (message.getBodyLength() > 0) {
+
+                OutputStream out = new FileOutputStream(filePath);
+                out.write(message.getBody(), 0, message.getBodyLength());
+                out.close();
+            }
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("end receiveFile file....");
+    }
+
+
+
+
 
 
     public static void receiveFile(String savePath, InputStream inputStream){

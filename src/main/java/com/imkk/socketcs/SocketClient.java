@@ -1,7 +1,6 @@
 package com.imkk.socketcs;
 
 import java.io.*;
-import java.lang.annotation.ElementType;
 import java.net.Socket;
 
 /**
@@ -177,7 +176,7 @@ public class SocketClient {
 
     private void sendFileMessage(){
         String filePath = this.getClass().getClassLoader().getResource("1111.zip").getPath();
-        FileMessageUtil.sendFile(filePath, mOutputStream);
+        FileUtil.sendFile(filePath, mOutputStream);
     }
 
 

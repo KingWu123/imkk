@@ -169,8 +169,9 @@ public class SocketServer {
             }
             //文件消息
             else if (message.getType() == 1){
-
-                System.out.println("    client msg : one file coming, received");
+                System.out.println("received one file, not saved");
+               // String filePath = "dest.zip";
+                //FileUtil.saveFile(filePath, message);
             }
 
 
