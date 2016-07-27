@@ -1,4 +1,4 @@
-package com.imkk.multicast;
+package com.imkk.noCenterTalk;
 
 /**
  * Created by kingwu on 7/18/16.
