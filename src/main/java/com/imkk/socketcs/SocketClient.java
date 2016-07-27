@@ -135,7 +135,7 @@ public class SocketClient {
 
 
                 //处理到来的消息
-                processCommMessage(message);
+                processComeMessage(message);
 
                 //如果是普通消息, 且回话内容为"echo bye", 会话结束
                 if(count == -1 || message.getType() == 0){
@@ -187,7 +187,7 @@ public class SocketClient {
      * 处理消息
      * @param message Message
      */
-    private void processCommMessage(Message message){
+    private void processComeMessage(Message message){
 
         //普通消息
         if(message.getType() == 0){
@@ -197,7 +197,7 @@ public class SocketClient {
         }
         //文件消息
         else if(message.getType() == 1){
-            System.out.println("server: one file coming, receiving...." );
+            System.out.println("server: one file coming, received" );
         }
 
     }

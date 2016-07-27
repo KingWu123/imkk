@@ -29,9 +29,9 @@ import java.util.Arrays;
  *   4). 读取包体，由于已知包体长度，因此读取包体就变得非常简单了，只要一直读取相应的长度，剩余的又回到第一条寻找包头。
  *
  *
- * 2. 发送方很有可能一次发多个包,这样接收方很有可能一次读取含有多个包(黏包)的情况存在, {@link #getMessages()}可以处理黏包的问题
+ * 2. 发送方很有可能一次发多个包,这样接收方读取的流很有可能一次含有多个包(黏包), {@link #getMessages()}可以处理黏包的问题
  *
- * attention: 这个类主要用于接收对一个的普通的Message对象消息。
+ * attention: 当接受的内容满足了一个完整Message要求的时候,才会返回这个Message,处理的过程在内存里。 所以,对于大型的文件,并不适用。
  *
  */
 
@@ -89,7 +89,7 @@ public class MessageStream {
         }
         catch (EOFException e) {
 
-            //如果抛出越界异常,说明不存在一个完成的Message包,则恢复开始的起始位置
+            //如果抛出越界异常,说明不存在一个完成的Message包,则恢复到开始判断包头的位置
             this.mPosition = currentPosition;
             //e.printStackTrace();
             return null;
@@ -99,7 +99,7 @@ public class MessageStream {
     /**
      * 从MessageStream中找出多个完成包,并封装成ArrayList<Message> 对象返回
      *
-     * 这是由于 客户端 很有可能同时发送多个包, 出现黏包的现象
+     * 这是由于 发送方 很有可能同时发送多个包, 出现黏包的现象
      *
      * @return ArrayList<Message>对象
      */
@@ -121,7 +121,7 @@ public class MessageStream {
 
             } catch (EOFException e) {
 
-                //如果抛出越界异常,说明不存在一个完成的Message包,则恢复开始的起始位置
+                //如果抛出越界异常,说明不存在一个完成的Message包,则恢复到开始判断包头的位置
                 this.mPosition = currentPosition;
                 flag = false;
             }
