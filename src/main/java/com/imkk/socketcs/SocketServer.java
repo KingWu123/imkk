@@ -1,9 +1,6 @@
 package com.imkk.socketcs;
 
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
@@ -64,119 +61,156 @@ public class SocketServer {
     }
 
 
-
-
+    /**
+     * 处理两种消息, 一种普通的 用Message对象来表达的消息, 一种文件消息。默认的是从接受普通消息开始的。
+     * 在接受文件消息时,需要先收到一个普通的Message消息,告知有文件将要到来, 然后 输入流的处理过程 切换到文件处理流程。
+     */
     private static class SocketRunnable implements Runnable{
 
         private Socket mClient = null;
+        private boolean isFileComing; //文件是否到来
 
-        public SocketRunnable(Socket client){
+        private InputStream   mInputStream;
+        private OutputStream  mOutputStream;
+        private MessageStream mMessageStream;
+
+        public SocketRunnable(Socket client) throws IOException {
             mClient = client;
+            isFileComing = false;
+
+            mOutputStream = mClient.getOutputStream();
+            mInputStream = mClient.getInputStream();
+            mMessageStream = new MessageStream();
         }
 
         public void run() {
 
-            OutputStream out = null;
-            InputStream in = null;
+            System.out.println("client ip:" + mClient.getInetAddress()  + "  port:" + mClient.getPort() + " come");
 
-            try {
+            boolean flag = true;
+            while (flag){
 
-                out = mClient.getOutputStream();
-                in = mClient.getInputStream();
+                try {
+                    if(!isFileComing) {
 
-                boolean flag = true;
+                        //方法里面如果发现 下一条 消息是文件消息,会改变 isFileComing=true。 切换到文件消息的处理流程。
+                        normalMessageCome(mMessageStream, mInputStream, mOutputStream);
 
-                System.out.println("client ip:" + mClient.getInetAddress()  + "  port:" + mClient.getPort() + " come");
+                    }else {
 
-                MessageStream messageStream = new MessageStream();
-                while (flag){
-
-                    int count = messageStream.receive(in);
-
-
-                    Message message= messageStream.getMessage();
-
-                    //如果count -1 且没有解析出消息, 则直接退出
-                    if (count == -1 &&  message == null){
-                        break;
-                    }else if (message == null){
-                        continue;
+                        fileMessageCome(mInputStream, mOutputStream);
                     }
 
+                }catch (Exception e){
 
-                    processMessage(message, out);
-
-                    //客户端发送的为普通消息,且表示结束会话
-                    if( count == -1 || message.getType() == 0){
-                        String msg = new String(message.getBody());
-                        //客户端告知断开连接
-                        if (msg.equals("bye")){
-                            flag = false;
-                        }
-                    }
+                    flag = false;
                 }
 
-            }catch (EOFException e){
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }catch (Exception e){
-
-            } finally {
-
-                if (out != null){
-                    try {
-                        out.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-                if (in != null){
-                    try {
-                        in.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-                if (mClient != null) {
-                    try {
-                        mClient.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
             }
+
+
+            closeSocket();
+
 
             System.out.println("client ip:" + mClient.getInetAddress() + "  port:" + mClient.getPort() + " exit");
         }
 
 
 
-        private void processMessage(Message message, OutputStream out) throws IOException{
+
+        /**
+         *  处理普通消息的到来
+         * @param messageStream  MessageStream对象
+         * @param in             输入流
+         * @param out            输出流
+         * @return               是否成功处理了一条消息
+         * @throws IOException
+         */
+        private boolean normalMessageCome(MessageStream messageStream, InputStream in, OutputStream out) throws IOException {
+
+
+            int count = messageStream.receive(in);
+
+            Message message = messageStream.getMessage();
+
+            //如果count = -1(表示客户端已经关闭了socket,没有数据可读了)。 且没有解析出消息。 抛出io异常
+            if (count == -1 && message == null) {
+                throw new IOException("remote socket closed and no message to process");
+            } else if (message == null) {
+                return false;
+            }
+
+            normalMessageResponse(message, out);
+
+
+
+            //客户端表示自己想传文件,则切换到文件传输方式
+            if (message.getType() == 1){
+                isFileComing = true;
+            }
+
+            return true;
+        }
+
+
+        //普通消息应答
+        private void normalMessageResponse(Message message, OutputStream out){
+
+
+            if (message.getBody() == null){
+                return;
+            }
+            String msg = new String(message.getBody());
 
             //客户端发送的为普通消息
-            if(message.getType() == 0){
+            System.out.println("    client msg : " + msg);
+            String answer = "echo " + msg;
+            System.out.println("    server msg : " + answer);
 
-                if (message.getBody() == null){
-                    return;
-                }
-                String msg = new String(message.getBody());
+            Message answerMessage = new Message((short) 0, answer.getBytes());
 
-                System.out.println("    client msg : " + msg);
-                String answer = "echo " + msg;
-                System.out.println("    server msg : " + answer);
-
-                Message answerMessage = new Message((short) 0, answer.getBytes());
+            try {
                 answerMessage.send(out);
-            }
-            //文件消息
-            else if (message.getType() == 1){
-                System.out.println("received one file, not saved");
-               // String filePath = "dest.zip";
-                //FileUtil.saveFile(filePath, message);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
 
+        }
 
+
+        private void fileMessageCome(InputStream inputStream, OutputStream outputStream) throws IOException{
+            //处理接受文件
+            FileUtil.receiveFile("dest.zip", inputStream);
+
+            //文件
+            isFileComing = false;
+        }
+
+
+
+
+        private void closeSocket(){
+            if (mOutputStream != null){
+                try {
+                    mOutputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (mInputStream != null){
+                try {
+                    mInputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (mClient != null) {
+                try {
+                    mClient.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 }

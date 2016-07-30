@@ -59,7 +59,9 @@ public class MessageStream {
      * @param inputStream 输入流
      * @throws IOException
      *
-     * @return 读取的字节数
+     * @return   the total number of bytes read into the buffer, or
+     *             -1 if there is no more data because the end of
+     *             the stream has been reached.
      */
     public  int receive(InputStream inputStream) throws IOException {
 
