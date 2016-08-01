@@ -44,13 +44,13 @@ public class UDPSocketUser {
      * @param sendBytes 发送的内容
      * @return 发送数据是否成功
      */
-    public boolean sendMessage(String hostName, int port, byte[]sendBytes) {
+    public boolean sendMessage(String host, int port, byte[]sendBytes) {
 
         try {
 
-            InetAddress host = InetAddress.getByName(hostName);
+            InetAddress address = InetAddress.getByName(host);
             DatagramPacket sendPacket
-                    = new DatagramPacket(sendBytes , 0 ,sendBytes.length , host , port);
+                    = new DatagramPacket(sendBytes , 0 ,sendBytes.length , address , port);
             mUserSocket.send(sendPacket);
             return true;
 

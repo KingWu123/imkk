@@ -5,7 +5,7 @@ import java.io.*;
 /**
  * Created by kingwu on 7/25/16.
  *
- * socket 通信 消息协议的 统一定义
+ * tcp socket 通信 消息协议的 统一定义
  *
  * 一条消息由:   包头标记位 + 消息类型 + 包体长度 + 包体  组成。
  *
