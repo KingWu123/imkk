@@ -146,7 +146,7 @@ public class SocketClient {
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+           // e.printStackTrace();
         }
 
         closeSocket();
@@ -176,7 +176,7 @@ public class SocketClient {
         }
 
 
-        //对方接受文件
+        //对方接受文件,则开始发送文件
         if(responseMsg.equals("echo file")){
             String filePath = this.getClass().getClassLoader().getResource("1111.zip").getPath();
             FileUtil.sendFile(filePath, mOutputStream);

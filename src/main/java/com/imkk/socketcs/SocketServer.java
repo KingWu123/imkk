@@ -39,9 +39,7 @@ public class SocketServer {
         while (true) {
             try {
                 Socket clientSocket = mServerSocket.accept();
-
                 mExec.execute(new SocketRunnable(clientSocket));
-
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -92,25 +90,17 @@ public class SocketServer {
 
                 try {
                     if(!isFileComing) {
-
                         //方法里面如果发现 下一条 消息是文件消息,会改变 isFileComing=true。 切换到文件消息的处理流程。
                         normalMessageCome(mMessageStream, mInputStream, mOutputStream);
 
                     }else {
-
                         fileMessageCome(mInputStream, mOutputStream);
                     }
-
                 }catch (Exception e){
-
                     flag = false;
                 }
-
             }
-
-
             closeSocket();
-
 
             System.out.println("client ip:" + mClient.getInetAddress() + "  port:" + mClient.getPort() + " exit");
         }

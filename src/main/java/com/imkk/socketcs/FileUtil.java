@@ -50,39 +50,50 @@ public class FileUtil {
     }
 
 
-    public static void receiveFile(String savePath, InputStream inputStream){
+    public static void receiveFile(String savePath, InputStream inputStream) throws IOException{
 
         System.out.println("begin receiveFile file....");
+
+
+        OutputStream out = null;
         try {
-
-            OutputStream out =  new FileOutputStream(savePath);
-
-            DataInputStream in = new DataInputStream(inputStream);
-            int packageFlag = in.readInt();
-            int packageType = in.readShort();
-            int fileLength = in.readInt();
-            //可以对上面的3信息做校验
-
-            byte[] bytes = new byte[1024 * 8];
-            int totalLength = 0;
-            int count;
-            while ((count = in.read(bytes))> 0){
-
-                out.write(bytes,0, count);
-                totalLength += count;
-
-                if (totalLength == fileLength){
-                    break;
-                }
-            }
-
-            out.close();
-
+            out = new FileOutputStream(savePath);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
+        }
+
+
+        DataInputStream in = new DataInputStream(inputStream);
+        int packageFlag = in.readInt();
+        int packageType = in.readShort();
+        int fileLength = in.readInt();
+        //可以对上面的3信息做校验
+
+        byte[] bytes = new byte[1024 * 8];
+        int totalLength = 0;
+        int count;
+        while ((count = in.read(bytes))> 0){
+
+            try {
+                out.write(bytes,0, count);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            totalLength += count;
+            if (totalLength == fileLength){
+                break;
+            }
+        }
+
+
+
+        try {
+            out.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+
 
         System.out.println("end receiveFile file....");
     }
