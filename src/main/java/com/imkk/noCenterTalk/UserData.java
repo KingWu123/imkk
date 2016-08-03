@@ -7,7 +7,9 @@ import java.io.*;
 /**
  * Created by kingwu on 8/1/16.
  */
-public class UserData {
+public class UserData  implements Comparable<UserData>{
+
+
 
     public static enum NetWorkState{
         USER_ONLINE,  //上线
@@ -122,4 +124,13 @@ public class UserData {
 
        return null;
     }
+
+    public int compareTo(UserData o) {
+        if ((this.getUserId().equals(o.getUserId()))){
+            return 0;
+        }else {
+            return -1;
+        }
+    }
+
 }

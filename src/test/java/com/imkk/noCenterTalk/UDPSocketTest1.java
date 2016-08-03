@@ -8,25 +8,25 @@ import java.net.InetAddress;
 
 /**
  * Created by kingwu on 7/27/16.
- *
- *
  */
-public class UDPSocketTest2 {
+public class UDPSocketTest1 {
 
     public static void main(String[] args){
 
-        final UDPSocketUser udpSocketUser = new UDPSocketUser(50001);
+        final UDPSocketUser udpSocketUser1 = new UDPSocketUser(60001);
+        udpSocketUser1.joinGroup();
 
 
         new Thread(new Runnable() {
             public void run() {
-                sendMessage(udpSocketUser);
+                sendMessage(udpSocketUser1);
             }
         }).start();
 
+
         new Thread(new Runnable() {
             public void run() {
-                receiveMessage(udpSocketUser);
+                receiveMessage(udpSocketUser1);
             }
         }).start();
 
@@ -55,8 +55,8 @@ public class UDPSocketTest2 {
                 }
 
                 System.out.println("I " + udpSocketUser );
-                System.out.println("         \"" + str + "\"");
-                udpSocketUser.sendMessage("localhost", 60001, str.getBytes());
+                System.out.println("        \"" + str + "\"");
+                udpSocketUser.sendMessage("localhost", 50001, str.getBytes());
             }
         }catch (IOException e) {
             e.printStackTrace();
@@ -81,7 +81,7 @@ public class UDPSocketTest2 {
                 int port = datagramPacket.getPort();
 
                 System.out.println("friends:  " +  remoteAddress + " port:"  + port);
-                System.out.println("  \"" + msg + "\"");
+                System.out.println("   \"" + msg + "\"");
 
                 if (msg.equals("bye")){
                     flag = false;
@@ -93,4 +93,5 @@ public class UDPSocketTest2 {
 
 
     }
+
 }
