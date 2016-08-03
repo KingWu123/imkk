@@ -13,7 +13,7 @@ public class UDPSocketTest {
 
     public static void main(String[] args){
 
-        final UDPSocketUser udpSocketUser1 = new UDPSocketUser();
+        final UdpSocketUser udpSocketUser1 = new UdpSocketUser();
         udpSocketUser1.joinGroup();
 
         new Thread(new Runnable() {
@@ -39,55 +39,53 @@ public class UDPSocketTest {
         }
     }
 
-    private static void sendMessage(UDPSocketUser udpSocketUser){
+    private static void sendMessage(UdpSocketUser udpSocketUser){
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
         try {
-            boolean flag = true;
+            while (true) {
 
-            while (flag) {
-
+                //输入的时候,输入用户id 和 发送的话,
                 String str = reader.readLine();
                 if (str.equals("bye")){
-                    flag = false;
+                    break;
                 }
 
-                System.out.println("I " + udpSocketUser );
-                System.out.println("        \"" + str + "\"");
-                udpSocketUser.sendMessage("10.240.252.97", 40001, str.getBytes());
+
+                String[] result = str.split(" ");
+                if (result.length == 2) {
+                    UserData friend = udpSocketUser.getFriendById(result[0]);
+                    if (friend != null) {
+                        udpSocketUser.sendMessage(friend.getUserIP(), friend.getUserPort(), result[1].getBytes());
+                    }
+                }
             }
         }catch (IOException e) {
             e.printStackTrace();
         }
 
+        udpSocketUser.close();
+
     }
 
-    private static void receiveMessage(UDPSocketUser udpSocketUser){
+    private static void receiveMessage(UdpSocketUser udpSocketUser){
 
         boolean flag = true;
 
-        try {
+        while (flag) {
+            try {
+                UdpMessage udpMessage = udpSocketUser.receiveMessage();
 
-            while (flag){
-
-                DatagramPacket datagramPacket = udpSocketUser.receiveMessage();
-
-                byte[] body = datagramPacket.getData();
-                int length = datagramPacket.getLength();
-                String msg = new String(body, 0, length);
-                InetAddress remoteAddress = datagramPacket.getAddress();
-                int port = datagramPacket.getPort();
-
-                System.out.println("friends:  " +  remoteAddress + " port:"  + port);
-                System.out.println("   \"" + msg + "\"");
-
-                if (msg.equals("bye")){
-                    flag = false;
+                if (udpMessage.getType() == UdpMessage.NORMAL_MESSAGE) {
+                    System.out.println("remote: " + new String(udpMessage.getBody()));
                 }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }catch (Exception e){
+
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
 
 

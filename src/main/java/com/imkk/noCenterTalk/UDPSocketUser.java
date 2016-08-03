@@ -10,7 +10,7 @@ import java.util.*;
  * Udp 通信的 一个用户端。  随机bind一个本地的有效localIP 和 port
  *
  */
-public class UDPSocketUser {
+public class UdpSocketUser {
 
 
     private DatagramSocket mUserSocket;
@@ -22,7 +22,7 @@ public class UDPSocketUser {
     private InetAddress mLocalHostAddress;
 
 
-    public UDPSocketUser() {
+    public UdpSocketUser() {
         try {
             mLocalHostAddress = InetAddress.getLocalHost();
             mUserSocket = new DatagramSocket(0, mLocalHostAddress);
@@ -115,6 +115,10 @@ public class UDPSocketUser {
                         }
 
                         addFriend(friend);
+
+                        //收到广播后,同时给广播方发送一条告知身份的用户数据,告诉自己的地址信息
+                        UdpMessage udpMessage = new UdpMessage(UdpMessage.USER_INO_MESSAGE, friend.toBytes());
+                        sendMessage(friend.getUserIP(), friend.getUserPort(), udpMessage.toBytes());
                     }
 
                 }catch (IOException e) {
@@ -155,7 +159,7 @@ public class UDPSocketUser {
      * @param userId
      * @return
      */
-    synchronized private  UserData getFriendById(String userId){
+    synchronized public  UserData getFriendById(String userId){
 
         Iterator<UserData> iterator = mFriends.iterator();
         UserData containedFriend = null;
@@ -179,37 +183,43 @@ public class UDPSocketUser {
      * @param sendBytes 发送的内容
      * @return 发送数据是否成功
      */
-    public boolean sendMessage(String host, int port, byte[]sendBytes) {
+    public boolean sendMessage(String host, int port, byte[]sendBytes) throws IOException {
 
-        try {
-
-            InetAddress address = InetAddress.getByName(host);
-            DatagramPacket sendPacket
+        InetAddress address = InetAddress.getByName(host);
+        DatagramPacket sendPacket
                     = new DatagramPacket(sendBytes , 0 ,sendBytes.length , address , port);
-            mUserSocket.send(sendPacket);
-            return true;
+        mUserSocket.send(sendPacket);
+        return true;
 
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return false;
     }
 
 
-    public DatagramPacket receiveMessage() throws IOException{
+    public UdpMessage receiveMessage() throws IOException{
 
         byte[] buffer = new byte[1024 * 16];
         DatagramPacket receivePacket = new DatagramPacket(buffer, 0, buffer.length);
 
         mUserSocket.receive(receivePacket);
 
-        //receivePacket.getAddress();
-        //receivePacket.getPort();
+        UdpMessage udpMessage = UdpMessage.bytesToUdpMessage(receivePacket.getData());
 
-        return receivePacket;
+        //如果过来的是对方的用户数据, 这里截断掉
+        if (udpMessage.getType() == UdpMessage.USER_INO_MESSAGE){
+
+            UserData userData = UserData.userData(udpMessage.getBody());
+
+            //不管用户自己填的是什么ip/port,这里都已包里面的ip/port为准
+            InetAddress remoteAddress =  receivePacket.getAddress();
+            int remotePort = receivePacket.getPort();
+            userData.setUserIP(remoteAddress.getHostAddress());
+            userData.setUserPort(remotePort);
+
+            addFriend(userData);
+
+            return null;
+        }
+
+        return udpMessage;
     }
 
 

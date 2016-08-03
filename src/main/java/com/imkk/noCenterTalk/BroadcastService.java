@@ -64,8 +64,7 @@ public class BroadcastService {
      */
     public boolean sendUserBroadcastData(DatagramSocket sender, UserData userData) throws IOException{
 
-
-        byte[] bytes = userData.getBytes();
+        byte[] bytes = userData.toBytes();
         if (bytes.length > MAX_PACKET_SIZE){
             return false;
         }
@@ -85,6 +84,12 @@ public class BroadcastService {
 
         byte[] body = receivePacket.getData();
         UserData userData = UserData.userData(body);
+
+        //不管用户自己填的是什么ip/port,这里都已包里面的ip/port为准
+        InetAddress remoteAddress =  receivePacket.getAddress();
+        int remotePort = receivePacket.getPort();
+        userData.setUserIP(remoteAddress.getHostAddress());
+        userData.setUserPort(remotePort);
 
         return userData;
     }

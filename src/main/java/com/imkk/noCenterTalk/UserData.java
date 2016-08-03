@@ -71,7 +71,7 @@ public class UserData  implements Comparable<UserData>{
      * 将用户数据转为bytes数据返回
      * @return 用户bytes数据
      */
-    public byte[] getBytes(){
+    public byte[] toBytes(){
 
         try {
 
@@ -116,6 +116,9 @@ public class UserData  implements Comparable<UserData>{
             userData.setUserIP(in.readUTF());
             userData.setUserPort(in.readInt());
             userData.setNetWorkState(NetWorkState.values()[in.readInt()]);
+
+            in.close();
+            bin.close();
 
             return userData;
         } catch (IOException e) {
