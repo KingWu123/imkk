@@ -17,30 +17,24 @@ public class UDPSocketUser {
     private UserData  mUserData;
     private BroadcastService mBroadcastService;
     private Set<UserData> mFriends = new HashSet<UserData>();
-    private Thread mReceiveFriendThread;
+    private Thread mReceiveBroadcastFriendThread;
+
+    private InetAddress mLocalHostAddress;
+
 
     public UDPSocketUser() {
-
         try {
-            mUserSocket = new DatagramSocket();
-            mUserSocket.bind(new InetSocketAddress(0));
+            mLocalHostAddress = InetAddress.getLocalHost();
+            mUserSocket = new DatagramSocket(0, mLocalHostAddress);
+
             createUserData();
+
             mBroadcastService = new BroadcastService();
+
+
         } catch (SocketException e) {
             e.printStackTrace();
-        }
-    }
-
-
-
-    public UDPSocketUser(int port) {
-
-        try {
-            mUserSocket = new DatagramSocket(port);
-            createUserData();
-            mBroadcastService = new BroadcastService();
-
-        } catch (SocketException e) {
+        } catch (UnknownHostException e) {
             e.printStackTrace();
         }
     }
@@ -90,8 +84,8 @@ public class UDPSocketUser {
             mBroadcastService.sendUserBroadcastData(mUserSocket, mUserData);
 
 
-            //接受广播线程终端,不再接受广播事件
-            mReceiveFriendThread.interrupt();
+            //接受广播线程终端掉, 不再接受广播事件
+            mReceiveBroadcastFriendThread.interrupt();
 
             //离开广播组
             mBroadcastService.leaveGroup();
@@ -102,19 +96,24 @@ public class UDPSocketUser {
     }
 
 
-
-
     /**
      * 接受广播来的其他用户数据
      */
-    public void receiveFriendsData(){
+    private void receiveFriendsData(){
 
-        mReceiveFriendThread = new Thread(new Runnable() {
+        mReceiveBroadcastFriendThread = new Thread(new Runnable() {
             public void run() {
 
                 try {
                     while (!Thread.interrupted()) {
                         UserData friend = mBroadcastService.receiveUserBroadcastData();
+
+                        //过滤掉自己发给自己的广播
+                        if (friend.getUserIP().equals(mUserData.getUserIP())
+                                && friend.getUserPort() == mUserData.getUserPort()) {
+                            continue;
+                        }
+
                         addFriend(friend);
                     }
 
@@ -123,8 +122,9 @@ public class UDPSocketUser {
                 }
             }
         });
-        mReceiveFriendThread.start();
+        mReceiveBroadcastFriendThread.start();
     }
+
 
 
     /**
@@ -229,7 +229,6 @@ public class UDPSocketUser {
         this.mUserData.setUserIP(mUserSocket.getLocalAddress().getHostAddress());
         this.mUserData.setUserPort(mUserSocket.getLocalPort());
         this.mUserData.setNetWorkState(UserData.NetWorkState.USER_ONLINE);
-
 
     }
 

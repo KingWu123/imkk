@@ -9,13 +9,12 @@ import java.net.InetAddress;
 /**
  * Created by kingwu on 7/27/16.
  */
-public class UDPSocketTest1 {
+public class UDPSocketTest {
 
     public static void main(String[] args){
 
-        final UDPSocketUser udpSocketUser1 = new UDPSocketUser(60001);
+        final UDPSocketUser udpSocketUser1 = new UDPSocketUser();
         udpSocketUser1.joinGroup();
-
 
         new Thread(new Runnable() {
             public void run() {
@@ -56,7 +55,7 @@ public class UDPSocketTest1 {
 
                 System.out.println("I " + udpSocketUser );
                 System.out.println("        \"" + str + "\"");
-                udpSocketUser.sendMessage("localhost", 50001, str.getBytes());
+                udpSocketUser.sendMessage("10.240.252.97", 40001, str.getBytes());
             }
         }catch (IOException e) {
             e.printStackTrace();
