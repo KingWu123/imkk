@@ -11,12 +11,12 @@ import java.util.*;
  *
  * 实现局域网内无中心服务的聊天功能. 实现过程如下:
  * 1. 每个User会用 {@see BroadcastService}创建一个广播MulticastSocket, 使用这个广播socket将自身的用户信息(包括ip/port等)广播出去。
- * 2. 当局域网内 加入组播的用户收到这个广播通知后,就在自己的用户表里记录下这个用户信息。
- *         同时向这个用户的ip/port发送一条自身的信息 (注意:这个过程不是广播,而是单播通信)
+ * 2. 当局域网内 加入组播的用户收到这个广播通知后,就在自己的用户表里记录下收到的用户信息。
+ *         同时向这个用户的ip/port发送一条自身信息 (注意:这个过程不是广播,而是单播通信)
  *
- * 这样每个用户就能维护一个局域网所有用户的信息表,知道对方的ip/port。 可以有选择的进行tcp/udp通信了。当用户的上线状态改变时,也用此流程处理
+ * 3. 这样每个用户就能维护一个局域网所有用户的信息表,知道对方的ip/port。 可以有选择的进行tcp/udp通信了。当用户的上线状态改变时,也用此流程处理
  *
- * 上面的方案类似于ARP的处理方式。
+ * *****上面的方案类似于ARP的处理方式*******
  *
  */
 public class UdpSocketUser {
@@ -25,7 +25,7 @@ public class UdpSocketUser {
     private DatagramSocket mUserSocket;
     private UserData  mUserData;
     private BroadcastService mBroadcastService;
-    private Set<UserData> mFriends = new HashSet<UserData>();
+    private Set<UserData> mFriends = new HashSet<UserData>(); //这个数据的读取要保证线程安全
     private Thread mReceiveBroadcastFriendThread;
 
     private InetAddress mLocalHostAddress;
@@ -124,11 +124,13 @@ public class UdpSocketUser {
                         }
 
                         //缓存到用户列表
-                        addFriend(friend);
+                        boolean isNewFriend = updateFriends(friend);
 
-                        //收到广播后,同时给广播方发送一条告知身份的用户数据,告诉自己的地址信息
-                        UdpMessage udpMessage = new UdpMessage(UdpMessage.USER_INO_MESSAGE, mUserData.toBytes());
-                        sendMessage(friend.getUserIP(), friend.getUserPort(), udpMessage);
+                        //收到广播后,如果对方是新用户,同时给广播方发送一条自身用户数据,(单播过去)
+                        if (isNewFriend){
+                            UdpMessage udpMessage = new UdpMessage(UdpMessage.USER_INO_MESSAGE, mUserData.toBytes());
+                            sendMessage(friend.getUserIP(), friend.getUserPort(), udpMessage);
+                        }
                     }
 
                 }catch (IOException e) {
@@ -147,6 +149,7 @@ public class UdpSocketUser {
      * @param port     远端应用端口
      * @param udpMessage 发送的Message内容
      * @return 发送数据是否成功
+     * @throws IOException
      */
     public boolean sendMessage(String host, int port, UdpMessage udpMessage) throws IOException {
 
@@ -160,6 +163,11 @@ public class UdpSocketUser {
     }
 
 
+    /**
+     * 接受到的udp消息
+     * @return  UdpMessage
+     * @throws IOException
+     */
     public UdpMessage receiveMessage() throws IOException{
 
         byte[] buffer = new byte[1024 * 16];
@@ -180,7 +188,7 @@ public class UdpSocketUser {
             userData.setUserIP(remoteAddress.getHostAddress());
             userData.setUserPort(remotePort);
 
-            addFriend(userData);
+            updateFriends(userData);
 
             return null;
         }
@@ -190,9 +198,9 @@ public class UdpSocketUser {
     }
 
 
-
-
-    //生成用户数据
+    /**
+     *     生成用户数据
+     */
     private void createUserData(){
         long id = System.currentTimeMillis();
         this.mUserData = new UserData();
@@ -206,12 +214,15 @@ public class UdpSocketUser {
     }
 
 
-    /**
-     * 添加一个 朋友
-     * @param newFriend userData
-     */
-    synchronized private  void addFriend(UserData newFriend){
 
+    /**
+     * 更新friends信息
+     * 如果没有, 就将新的friend信息加进来;
+     * 如果有, 更新用户的状态
+     * @return 是否是新用户
+     * @param newFriend
+     */
+    private synchronized Boolean updateFriends(UserData newFriend){
         //先查找这个friend用户是否存在,如果存在了,先删除掉。
         Iterator<UserData> iterator = mFriends.iterator();
         UserData containedFriend = null;
@@ -230,10 +241,33 @@ public class UdpSocketUser {
 
         System.out.println("-------friends list:-------\n" + mFriends);
         System.out.println("---------------------------");
+
+        return containedFriend == null;
     }
 
     /**
-     * 根据用户id一个 朋友
+     * 删除一个 朋友
+     * @param newFriend userData
+     */
+    synchronized public  void removeFriend(UserData newFriend){
+
+        //先查找这个friend用户是否存在,如果存在了,先删除掉。
+        Iterator<UserData> iterator = mFriends.iterator();
+        UserData containedFriend = null;
+        while (iterator.hasNext()){
+            UserData tempUserData = iterator.next();
+            if (tempUserData.compareTo(newFriend) == 0){
+                containedFriend = tempUserData;
+                break;
+            }
+        }
+        if (containedFriend != null){
+            mFriends.remove(containedFriend);
+        }
+    }
+
+    /**
+     * 根据用户id一个 查找朋友
      * @param userId
      * @return
      */
@@ -251,11 +285,12 @@ public class UdpSocketUser {
         return containedFriend;
     }
 
+
+
     @Override
     public String toString() {
         return "ip: " + mUserSocket.getLocalAddress() + " port: " + mUserSocket.getLocalPort();
     }
-
 
 
 }

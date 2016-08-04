@@ -139,6 +139,18 @@ public class UserData  implements Comparable<UserData>{
 
     @Override
     public String toString() {
-        return "id = " + userId + "; ip = " + userIP + "; port: " + userPort + "\n";
+        return "id = " + userId + "; ip = " + userIP + "; port: " + userPort + "; netState: " + getNetStateStr() + "\n";
+    }
+
+    private String getNetStateStr(){
+        switch (netWorkState){
+            case USER_ONLINE:
+                return "online";
+            case USER_OFFLINE:
+                return "offline";
+            case USER_HIDDEN:
+                return "hidden";
+        }
+        return "unknown";
     }
 }

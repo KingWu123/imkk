@@ -43,12 +43,11 @@ public class UDPSocketTest {
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
-        try {
-            while (true) {
-
+        while (true) {
+            try {
                 //输入的时候,输入用户id 和 发送的话,
                 String str = reader.readLine();
-                if (str.equals("bye")){
+                if (str == null || str.equals("bye")){
                     break;
                 }
 
@@ -61,9 +60,10 @@ public class UDPSocketTest {
                         udpSocketUser.sendMessage(friend.getUserIP(), friend.getUserPort(), udpMessage);
                     }
                 }
+
+            }catch (IOException e) {
+                e.printStackTrace();
             }
-        }catch (IOException e) {
-            e.printStackTrace();
         }
 
         udpSocketUser.close();
@@ -84,8 +84,10 @@ public class UDPSocketTest {
 
             } catch (IOException e) {
                 e.printStackTrace();
+                flag = false;
             }catch (Exception e){
 
+                flag = false;
             }
         }
 
