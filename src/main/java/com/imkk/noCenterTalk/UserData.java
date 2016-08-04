@@ -1,11 +1,12 @@
 package com.imkk.noCenterTalk;
 
-import org.omg.CORBA.PUBLIC_MEMBER;
-
 import java.io.*;
+import java.nio.ByteBuffer;
 
 /**
  * Created by kingwu on 8/1/16.
+ *
+ * 用户数据
  */
 public class UserData  implements Comparable<UserData>{
 
@@ -67,13 +68,20 @@ public class UserData  implements Comparable<UserData>{
     }
 
 
+
+
+
     /**
      * 将用户数据转为bytes数据返回
      * @return 用户bytes数据
      */
+    // TODO: 8/4/16  这里面将基本数据类型转为 byte[] 和 将byte[]转为基本数据类型的方式并不好, 用stream会参数额外的byte,增加了包的大小
     public byte[] toBytes(){
 
         try {
+
+            // int totalLength = userId.getBytes().length + userIP.getBytes().length + userName.getBytes().length + 4 + 4;
+            //ByteBuffer byteBuffer = ByteBuffer.allocate(totalLength);
 
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ObjectOutput out = new ObjectOutputStream(bos);

@@ -65,7 +65,7 @@ public class MessageStream {
      */
     public  int receive(InputStream inputStream) throws IOException {
 
-        int length =  1024 * 8;
+        int length =  CHUNK_SIZE;
         byte[] buffer = new byte[length];
 
         int count =  inputStream.read(buffer, 0, length);
