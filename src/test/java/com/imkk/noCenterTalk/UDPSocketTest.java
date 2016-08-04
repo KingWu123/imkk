@@ -57,7 +57,8 @@ public class UDPSocketTest {
                 if (result.length == 2) {
                     UserData friend = udpSocketUser.getFriendById(result[0]);
                     if (friend != null) {
-                        udpSocketUser.sendMessage(friend.getUserIP(), friend.getUserPort(), result[1].getBytes());
+                        UdpMessage udpMessage  = new UdpMessage(UdpMessage.NORMAL_MESSAGE, result[1].getBytes());
+                        udpSocketUser.sendMessage(friend.getUserIP(), friend.getUserPort(), udpMessage);
                     }
                 }
             }
@@ -78,7 +79,7 @@ public class UDPSocketTest {
                 UdpMessage udpMessage = udpSocketUser.receiveMessage();
 
                 if (udpMessage.getType() == UdpMessage.NORMAL_MESSAGE) {
-                    System.out.println("remote: " + new String(udpMessage.getBody()));
+                    System.out.println("\"" + new String(udpMessage.getBody()) + "\"");
                 }
 
             } catch (IOException e) {

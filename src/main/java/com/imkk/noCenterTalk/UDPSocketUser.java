@@ -9,6 +9,15 @@ import java.util.*;
  *
  * Udp 通信的 一个用户端。  随机bind一个本地的有效localIP 和 port
  *
+ * 实现局域网内无中心服务的聊天功能. 实现过程如下:
+ * 1. 每个User会用 {@see BroadcastService}创建一个广播MulticastSocket, 使用这个广播socket将自身的用户信息(包括ip/port等)广播出去。
+ * 2. 当局域网内 加入组播的用户收到这个广播通知后,就在自己的用户表里记录下这个用户信息。
+ *         同时向这个用户的ip/port发送一条自身的信息 (注意:这个过程不是广播,而是单播通信)
+ *
+ * 这样每个用户就能维护一个局域网所有用户的信息表,知道对方的ip/port。 可以有选择的进行tcp/udp通信了。当用户的上线状态改变时,也用此流程处理
+ *
+ * 上面的方案类似于ARP的处理方式。
+ *
  */
 public class UdpSocketUser {
 
@@ -41,7 +50,7 @@ public class UdpSocketUser {
 
 
     /**
-     * 加入广播组
+     * 加入广播组, 同时将自身的用户信息广播出去, 并监听组播内的广播
      */
     public void joinGroup(){
         try {
@@ -114,11 +123,12 @@ public class UdpSocketUser {
                             continue;
                         }
 
+                        //缓存到用户列表
                         addFriend(friend);
 
                         //收到广播后,同时给广播方发送一条告知身份的用户数据,告诉自己的地址信息
-                        UdpMessage udpMessage = new UdpMessage(UdpMessage.USER_INO_MESSAGE, friend.toBytes());
-                        sendMessage(friend.getUserIP(), friend.getUserPort(), udpMessage.toBytes());
+                        UdpMessage udpMessage = new UdpMessage(UdpMessage.USER_INO_MESSAGE, mUserData.toBytes());
+                        sendMessage(friend.getUserIP(), friend.getUserPort(), udpMessage);
                     }
 
                 }catch (IOException e) {
@@ -129,6 +139,71 @@ public class UdpSocketUser {
         mReceiveBroadcastFriendThread.start();
     }
 
+
+
+    /**
+     *  发送一条消息
+     * @param host 远端的 地址
+     * @param port     远端应用端口
+     * @param udpMessage 发送的Message内容
+     * @return 发送数据是否成功
+     */
+    public boolean sendMessage(String host, int port, UdpMessage udpMessage) throws IOException {
+
+        byte[]sendBytes = udpMessage.toBytes();
+        InetAddress address = InetAddress.getByName(host);
+        DatagramPacket sendPacket
+                    = new DatagramPacket(sendBytes , 0 ,sendBytes.length , address , port);
+        mUserSocket.send(sendPacket);
+        return true;
+
+    }
+
+
+    public UdpMessage receiveMessage() throws IOException{
+
+        byte[] buffer = new byte[1024 * 16];
+        DatagramPacket receivePacket = new DatagramPacket(buffer, 0, buffer.length);
+
+        mUserSocket.receive(receivePacket);
+
+        UdpMessage udpMessage = UdpMessage.bytesToUdpMessage(receivePacket.getData(),receivePacket.getLength());
+
+        //如果过来的是对方的用户数据, 这里截断掉
+        if (udpMessage.getType() == UdpMessage.USER_INO_MESSAGE){
+
+            UserData userData = UserData.userData(udpMessage.getBody(), receivePacket.getLength());
+
+            //不管用户自己填的是什么ip/port,这里都已包里面的ip/port为准
+            InetAddress remoteAddress =  receivePacket.getAddress();
+            int remotePort = receivePacket.getPort();
+            userData.setUserIP(remoteAddress.getHostAddress());
+            userData.setUserPort(remotePort);
+
+            addFriend(userData);
+
+            return null;
+        }
+
+        System.out.print("msg from friend " + receivePacket.getAddress() + "/" + receivePacket.getPort() + ": ");
+        return udpMessage;
+    }
+
+
+
+
+    //生成用户数据
+    private void createUserData(){
+        long id = System.currentTimeMillis();
+        this.mUserData = new UserData();
+
+        this.mUserData.setUserId("" + id);
+        this.mUserData.setUserName("user" + id);
+        this.mUserData.setUserIP(mUserSocket.getLocalAddress().getHostAddress());
+        this.mUserData.setUserPort(mUserSocket.getLocalPort());
+        this.mUserData.setNetWorkState(UserData.NetWorkState.USER_ONLINE);
+
+    }
 
 
     /**
@@ -152,6 +227,9 @@ public class UdpSocketUser {
         }
 
         mFriends.add(newFriend);
+
+        System.out.println("-------friends list:-------\n" + mFriends);
+        System.out.println("---------------------------");
     }
 
     /**
@@ -173,73 +251,11 @@ public class UdpSocketUser {
         return containedFriend;
     }
 
-
-
-
-    /**
-     *  发送一条消息
-     * @param host 远端的 地址
-     * @param port     远端应用端口
-     * @param sendBytes 发送的内容
-     * @return 发送数据是否成功
-     */
-    public boolean sendMessage(String host, int port, byte[]sendBytes) throws IOException {
-
-        InetAddress address = InetAddress.getByName(host);
-        DatagramPacket sendPacket
-                    = new DatagramPacket(sendBytes , 0 ,sendBytes.length , address , port);
-        mUserSocket.send(sendPacket);
-        return true;
-
-    }
-
-
-    public UdpMessage receiveMessage() throws IOException{
-
-        byte[] buffer = new byte[1024 * 16];
-        DatagramPacket receivePacket = new DatagramPacket(buffer, 0, buffer.length);
-
-        mUserSocket.receive(receivePacket);
-
-        UdpMessage udpMessage = UdpMessage.bytesToUdpMessage(receivePacket.getData());
-
-        //如果过来的是对方的用户数据, 这里截断掉
-        if (udpMessage.getType() == UdpMessage.USER_INO_MESSAGE){
-
-            UserData userData = UserData.userData(udpMessage.getBody());
-
-            //不管用户自己填的是什么ip/port,这里都已包里面的ip/port为准
-            InetAddress remoteAddress =  receivePacket.getAddress();
-            int remotePort = receivePacket.getPort();
-            userData.setUserIP(remoteAddress.getHostAddress());
-            userData.setUserPort(remotePort);
-
-            addFriend(userData);
-
-            return null;
-        }
-
-        return udpMessage;
-    }
-
-
     @Override
     public String toString() {
         return "ip: " + mUserSocket.getLocalAddress() + " port: " + mUserSocket.getLocalPort();
     }
 
 
-    //生成用户数据
-    private void createUserData(){
-        long id = System.currentTimeMillis();
-        this.mUserData = new UserData();
-
-        this.mUserData.setUserId("" + id);
-        this.mUserData.setUserName("user" + id);
-        this.mUserData.setUserIP(mUserSocket.getLocalAddress().getHostAddress());
-        this.mUserData.setUserPort(mUserSocket.getLocalPort());
-        this.mUserData.setNetWorkState(UserData.NetWorkState.USER_ONLINE);
-
-    }
 
 }

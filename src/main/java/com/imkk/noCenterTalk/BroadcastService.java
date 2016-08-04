@@ -83,9 +83,9 @@ public class BroadcastService {
         mBroadcastSocket.receive(receivePacket);
 
         byte[] body = receivePacket.getData();
-        UserData userData = UserData.userData(body);
+        UserData userData = UserData.userData(body, receivePacket.getLength());
 
-        //不管用户自己填的是什么ip/port,这里都已包里面的ip/port为准
+        //不管用户自己填的是什么ip/port,这里都以packet包里面的ip/port为准
         InetAddress remoteAddress =  receivePacket.getAddress();
         int remotePort = receivePacket.getPort();
         userData.setUserIP(remoteAddress.getHostAddress());

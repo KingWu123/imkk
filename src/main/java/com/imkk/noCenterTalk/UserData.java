@@ -11,7 +11,7 @@ public class UserData  implements Comparable<UserData>{
 
 
 
-    public static enum NetWorkState{
+    public  enum NetWorkState{
         USER_ONLINE,  //上线
         USER_OFFLINE, //离线
         USER_HIDDEN,  //隐身
@@ -100,9 +100,10 @@ public class UserData  implements Comparable<UserData>{
     /**
      * 将byte[] 类型数据转为一个用户数据
      * @param bytes
+     * @param length bytes有效数据长度
      * @return
      */
-    public static UserData userData(byte[] bytes){
+    public static UserData userData(byte[] bytes, int length){
 
         try {
             UserData userData ;
@@ -136,4 +137,8 @@ public class UserData  implements Comparable<UserData>{
         }
     }
 
+    @Override
+    public String toString() {
+        return "id = " + userId + "; ip = " + userIP + "; port: " + userPort + "\n";
+    }
 }

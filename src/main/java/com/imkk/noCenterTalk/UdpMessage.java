@@ -16,6 +16,8 @@ public class UdpMessage {
 
 
     public UdpMessage(){
+        type = 0;
+        body = null;
     }
 
     public UdpMessage(short type, byte[] body){
@@ -30,7 +32,7 @@ public class UdpMessage {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ObjectOutput out = new ObjectOutputStream(bos);
             out.writeShort(type);
-            out.write(body);
+            out.writeObject(body);
             out.close();
             byte[] msgBytes = bos.toByteArray();
             bos.close();
@@ -43,7 +45,7 @@ public class UdpMessage {
         return null;
     }
 
-    public static UdpMessage bytesToUdpMessage(byte[] bytes){
+    public static UdpMessage bytesToUdpMessage(byte[] bytes, int length){
         try {
             UdpMessage udpMessage = new UdpMessage();
 
@@ -52,14 +54,15 @@ public class UdpMessage {
             ObjectInput in = new ObjectInputStream(bin);
 
             udpMessage.setType(in.readShort());
-            udpMessage.setBody(new byte[bytes.length - 2]);
-            in.read(udpMessage.getBody());
+            udpMessage.setBody( (byte[])in.readObject());
 
             bin.close();
             in.close();
             return udpMessage;
 
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
 
