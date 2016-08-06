@@ -90,6 +90,7 @@ public class UserData  implements Comparable<UserData>{
             out.writeUTF(userIP);
             out.writeInt(userPort);
             out.writeInt(netWorkState.ordinal());
+            out.flush();
             out.close();
 
             byte[] bytes = bos.toByteArray();
@@ -125,7 +126,6 @@ public class UserData  implements Comparable<UserData>{
             userData.setUserIP(in.readUTF());
             userData.setUserPort(in.readInt());
             userData.setNetWorkState(NetWorkState.values()[in.readInt()]);
-
             in.close();
             bin.close();
 

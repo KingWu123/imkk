@@ -46,6 +46,7 @@ public class UdpMessage {
             ObjectOutput out = new ObjectOutputStream(bos);
             out.writeShort(type);
             out.writeObject(body);
+            out.flush();
             out.close();
             byte[] msgBytes = bos.toByteArray();
             bos.close();
