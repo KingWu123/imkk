@@ -1,4 +1,4 @@
-package com.imkk.socketcs;
+package com.imkk.tcpSocketTalk;
 
 import java.io.EOFException;
 import java.io.IOException;

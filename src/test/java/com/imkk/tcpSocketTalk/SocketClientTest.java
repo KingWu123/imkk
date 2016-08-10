@@ -1,6 +1,4 @@
-package com.imkk.socketcs;
-
-import java.io.IOException;
+package com.imkk.tcpSocketTalk;
 
 /**
  * Created by kingwu on 7/18/16.

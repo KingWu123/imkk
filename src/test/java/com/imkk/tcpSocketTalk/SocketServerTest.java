@@ -1,4 +1,4 @@
-package com.imkk.socketcs;
+package com.imkk.tcpSocketTalk;
 
 /**
  * Created by kingwu on 7/22/16.

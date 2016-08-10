@@ -1,7 +1,6 @@
-package com.imkk.noCenterTalk;
+package com.imkk.udpSocketTalk;
 
 import java.io.*;
-import java.nio.ByteBuffer;
 
 /**
  * Created by kingwu on 8/1/16.

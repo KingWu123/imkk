@@ -1,4 +1,4 @@
-package com.imkk.noCenterTalk;
+package com.imkk.udpSocketTalk;
 
 import java.io.IOException;
 import java.net.*;
