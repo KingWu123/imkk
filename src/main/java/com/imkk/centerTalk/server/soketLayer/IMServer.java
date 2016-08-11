@@ -1,4 +1,4 @@
-package com.imkk.centerTalk.server.soketChannel;
+package com.imkk.centerTalk.server.soketLayer;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -13,8 +13,8 @@ import java.util.concurrent.Executors;
  *
  * 实现一个有中心的聊天系统, 这个是sever端的入口, 可以接受TCP和UDP的请求
  *
- * 当有客户链接后, 如果是TCP请求, 则生成的socket都传给{@see TcpServerSocket}去处理
- *               如果是UDP请求, 则收到的数据包都传给{@see UdpServerSocket}去处理
+ * 当有客户链接后, 如果是TCP请求, 则生成的socket都传给{@see TcpSubServerSocket}去处理
+ *               如果是UDP请求, 则收到的数据包都传给{@see UdpSubSeverSocket}去处理
  *
  */
 public class IMServer {
@@ -45,7 +45,7 @@ public class IMServer {
         while (true) {
             try {
                 Socket clientSocket = mTcpServerSocket.accept();
-                mExec.execute(new TcpServerSocket(clientSocket));
+                mExec.execute(new TcpSubServerSocket(clientSocket));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -61,7 +61,7 @@ public class IMServer {
                 DatagramPacket receivePacket = new DatagramPacket(buffer, 0, buffer.length);
                 mUdpServerSocket.receive(receivePacket);
 
-                mExec.execute(new UdpSeverSocket(receivePacket));
+                mExec.execute(new UdpSubSeverSocket(receivePacket));
 
             } catch (IOException e) {
                 e.printStackTrace();

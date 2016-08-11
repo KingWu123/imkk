@@ -165,7 +165,7 @@ public class UdpSocketUser {
 
     /**
      * 接受到的udp消息
-     * @return  UdpMessage
+     * @return  KwUdpMessage
      * @throws IOException
      */
     public UdpMessage receiveMessage() throws IOException{

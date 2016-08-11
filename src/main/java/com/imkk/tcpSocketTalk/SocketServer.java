@@ -129,7 +129,7 @@ public class SocketServer {
 
             //如果count = -1(表示客户端已经关闭了socket,没有数据可读了)。 且没有解析出消息。 抛出io异常
             if (count == -1 && message == null) {
-                throw new IOException("remote socket closed and no message to process");
+                throw new IOException("remote socket closed and no message to distribute");
             } else if (message == null) {
                 return false;
             }

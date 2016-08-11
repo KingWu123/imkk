@@ -156,7 +156,7 @@ public class SocketClient {
 
     /**
      * 处理消息
-     * @param message Message
+     * @param message KwProtocol
      */
     private void processComeMessage(Message message){
 

@@ -99,11 +99,11 @@ public class MessageStream {
     }
 
     /**
-     * 从MessageStream中找出多个完成包,并封装成ArrayList<Message> 对象返回
+     * 从MessageStream中找出多个完成包,并封装成ArrayList<KwProtocol> 对象返回
      *
      * 这是由于 发送方 很有可能同时发送多个包, 出现黏包的现象
      *
-     * @return ArrayList<Message>对象
+     * @return ArrayList<KwProtocol>对象
      */
     public ArrayList<Message> getMessages(){
 
@@ -172,7 +172,7 @@ public class MessageStream {
      *  读取一条消息, 读取不成功,会抛出异常
      *
      *  方法里调用的 readInt/readShort/readBytes等,如果位数不够,会抛出EOFException异常, 方法返回
-     * @return  Message
+     * @return  KwProtocol
      * @throws EOFException
      */
     private Message readMessageStream() throws  EOFException{

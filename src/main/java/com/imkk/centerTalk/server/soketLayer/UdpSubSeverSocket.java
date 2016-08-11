@@ -1,15 +1,15 @@
-package com.imkk.centerTalk.server.soketChannel;
+package com.imkk.centerTalk.server.soketLayer;
 
 import java.net.DatagramPacket;
 
 /**
  * Created by kingwu on 8/10/16.
  */
-public class UdpSeverSocket implements Runnable {
+public class UdpSubSeverSocket implements Runnable {
 
     private DatagramPacket mReceivePacket;
 
-    public UdpSeverSocket(DatagramPacket receivePacket){
+    public UdpSubSeverSocket(DatagramPacket receivePacket){
         mReceivePacket = receivePacket;
     }
 
